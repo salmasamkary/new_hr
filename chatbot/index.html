@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Chatbot</title>
+  <style>
+    :root {
+      --navy: #101828; --blue: #3867e8; --blue-dark: #2852c7;
+      --muted: #667085; --border: #e4e7ec;
+      --surface: #ffffff; --background: #f5f7fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; height: 100vh; display: flex; flex-direction: column;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--navy); background: var(--background);
+    }
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 16px 7%; display: flex; justify-content: space-between; align-items: center;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 19px; font-weight: 700; }
+    .brand-icon { display: grid; place-items: center; width: 42px; height: 42px; background: #e9efff; color: var(--blue); border-radius: 12px; font-size: 22px; }
+    .back { color: var(--blue); text-decoration: none; font-weight: 700; font-size: 14px; }
+    .back:hover { text-decoration: underline; }
+    #chat { flex: 1; overflow-y: auto; width: min(820px, 92%); margin: 0 auto; padding: 28px 0; display: flex; flex-direction: column; gap: 14px; }
+    .msg { max-width: 80%; padding: 13px 16px; border-radius: 16px; line-height: 1.6; font-size: 15px; white-space: pre-wrap; word-wrap: break-word; }
+    .bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .user { align-self: flex-end; background: var(--blue); color: #fff; border-bottom-right-radius: 4px; }
+    .error { color: #b42318; background: #fef3f2; border-color: #fecdca; }
+    form { background: var(--surface); border-top: 1px solid var(--border); padding: 16px 0; }
+    .row { width: min(820px, 92%); margin: 0 auto; display: flex; gap: 10px; }
+    input {
+      flex: 1; padding: 13px 16px; border: 1px solid var(--border); border-radius: 10px;
+      font: inherit; font-size: 15px; outline: none;
+    }
+    input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px #e9efff; }
+    button {
+      padding: 0 22px; border: 0; border-radius: 10px; background: var(--blue);
+      color: #fff; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    button:hover { background: var(--blue-dark); }
+    button:disabled { opacity: .6; cursor: default; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="brand-icon" aria-hidden="true">💬</div><span>HR Chatbot</span></div>
+    <a class="back" href="../">← Back to portal</a>
+  </header>
+
+  <div id="chat" aria-live="polite">
+    <div class="msg bot">Hello! I'm your HR assistant. Ask me anything about HR policies or the employee handbook.</div>
+  </div>
+
+  <form id="form">
+    <div class="row">
+      <input id="input" type="text" placeholder="Type your question..." autocomplete="off" required>
+      <button id="send" type="submit">Send</button>
+    </div>
+  </form>
+
+  <script>
+    // PASTE the chat URL from your n8n Chat Trigger / Webhook node (Production URL).
+    const WEBHOOK_URL = "https://salmaahmed.app.n8n.cloud/webhook/23318944-4728-4d16-a5b9-576c182a57b0";
+
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    const sessionId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
+
+    function addMessage(text, cls) {
+      const div = document.createElement("div");
+      div.className = "msg " + cls;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      input.value = "";
+      send.disabled = true;
+      const typing = addMessage("Thinking...", "bot");
+
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+  question: text
+})
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const raw = await res.text();
+        let reply = raw;
+        try {
+          const data = JSON.parse(raw);
+          const d = Array.isArray(data) ? data[0] : data;
+          reply = d.output || d.text || d.message || d.answer || JSON.stringify(d);
+        } catch (_) {}
+        typing.textContent = reply;
+      } catch (err) {
+        typing.textContent = "Sorry, I couldn't reach the HR assistant. Please try again. (" + err.message + ")";
+        typing.classList.add("error");
+      } finally {
+        send.disabled = false;
+        input.focus();
+        chat.scrollTop = chat.scrollHeight;
+      }
+    });
+  </script>
+</body>
+</html>
