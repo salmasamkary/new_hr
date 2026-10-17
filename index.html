@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR System Portal</title>
+  <style>
+    :root {
+      --navy: #101828; --blue: #3867e8; --blue-dark: #2852c7;
+      --muted: #667085; --border: #e4e7ec;
+      --surface: #ffffff; --background: #f5f7fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--navy); background: var(--background);
+    }
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 18px 7%; display: flex; justify-content: space-between;
+      align-items: center; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 19px; font-weight: 700; }
+    .brand-icon {
+      display: grid; place-items: center; width: 42px; height: 42px;
+      background: #e9efff; color: var(--blue); border-radius: 12px; font-size: 22px;
+    }
+    .header-label { color: var(--muted); font-size: 13px; }
+    main { width: min(1080px, 88%); margin: 0 auto; padding: 60px 0; flex: 1; }
+    .eyebrow { color: var(--blue); font-weight: 700; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+    h1 { margin: 14px 0; font-size: clamp(32px, 5vw, 50px); letter-spacing: -1.5px; line-height: 1.12; }
+    .intro { max-width: 620px; color: var(--muted); font-size: 17px; line-height: 1.8; }
+    .section-heading { margin: 44px 0 18px; font-size: 19px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 28px; display: flex; flex-direction: column; min-height: 270px;
+      box-shadow: 0 8px 28px rgba(16,24,40,.04); transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(16,24,40,.08); }
+    .card-icon { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 15px; background: #edf2ff; font-size: 27px; }
+    .card h3 { margin: 22px 0 10px; font-size: 21px; }
+    .card p { color: var(--muted); line-height: 1.7; margin: 0 0 24px; flex-grow: 1; }
+    .action {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      min-height: 46px; padding: 12px 17px; border-radius: 10px;
+      background: var(--blue); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px;
+    }
+    .action:hover { background: var(--blue-dark); }
+    .action.disabled { background: #f2f4f7; color: var(--muted); cursor: default; }
+    footer { text-align: center; padding: 22px; border-top: 1px solid var(--border); background: #fff; color: var(--muted); font-size: 13px; }
+    @media (max-width: 680px) { .header-label { display: none; } main { padding-top: 40px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="brand-icon" aria-hidden="true">✦</div><span>HR System Portal</span></div>
+    <span class="header-label">Human Resources · Employee Services</span>
+  </header>
+
+  <main>
+    <div class="eyebrow">Employee Services</div>
+    <h1>Your HR services,<br>all in one place.</h1>
+    <p class="intro">Welcome to the HR System Portal. Submit requests and get answers to your HR questions from one convenient place.</p>
+
+    <h2 class="section-heading">Choose a service</h2>
+    <section class="cards" id="services" aria-label="HR services"></section>
+  </main>
+
+  <footer>HR System Portal · Employee Services</footer>
+
+  <script>
+    // TO ADD A NEW FEATURE LATER: add one more { ... } block to this list.
+    // Leave url as "" to show a "Coming Soon" card.
+    const SERVICES = [
+      {
+        icon: "📅",
+        title: "Leave Request",
+        description: "Submit a leave request and provide the details needed for it to be reviewed.",
+        button: "Open Leave Request",
+        url: "https://faro7a06.app.n8n.cloud/webhook/3de3be36-78a9-491b-86db-759255690b6c",
+        newTab: true
+      },
+      {
+        icon: "💬",
+        title: "HR Chatbot",
+        description: "Ask questions about HR policies and the employee handbook.",
+        button: "Open HR Chatbot",
+        url: "./chatbot/",
+        newTab: false
+      }
+    ];
+
+    const container = document.getElementById("services");
+    SERVICES.forEach(s => {
+      const card = document.createElement("article");
+      card.className = "card";
+      const hasUrl = s.url && !s.url.startsWith("PASTE_");
+      card.innerHTML = `
+        <div class="card-icon" aria-hidden="true">${s.icon}</div>
+        <h3>${s.title}</h3>
+        <p>${s.description}</p>
+        ${hasUrl
+          ? `<a class="action" href="${s.url}" ${s.newTab ? 'target="_blank" rel="noopener"' : ''}>${s.button} <span aria-hidden="true">→</span></a>`
+          : `<a class="action disabled" aria-disabled="true">Coming Soon</a>`}
+      `;
+      container.appendChild(card);
+    });
+  </script>
+</body>
+</html>
