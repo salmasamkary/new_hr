@@ -71,6 +71,31 @@
     const send = document.getElementById("send");
     const sessionId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
 
+    // n8n may return the answer wrapped in several layers, e.g.
+    // {"Response": "{\n \"answer\": \"...\", \"sources\": [...]}"}
+    // Keep unwrapping until we reach the plain answer text.
+    function extractReply(value) {
+      for (let i = 0; i < 5; i++) {
+        if (typeof value === "string") {
+          const t = value.trim();
+          if (t.startsWith("{") || t.startsWith("[")) {
+            try { value = JSON.parse(t); continue; } catch (_) {}
+          }
+          return value;
+        }
+        if (Array.isArray(value)) { value = value[0]; continue; }
+        if (value && typeof value === "object") {
+          const next = value.answer ?? value.output ?? value.text ??
+                       value.message ?? value.Response ?? value.response;
+          if (next === undefined) return JSON.stringify(value);
+          value = next;
+          continue;
+        }
+        return String(value ?? "");
+      }
+      return String(value);
+    }
+
     function addMessage(text, cls) {
       const div = document.createElement("div");
       div.className = "msg " + cls;
@@ -93,18 +118,11 @@
         const res = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({
-  question: text
-})
+          body: JSON.stringify({ question: text })
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
         const raw = await res.text();
-        let reply = raw;
-        try {
-          const data = JSON.parse(raw);
-          const d = Array.isArray(data) ? data[0] : data;
-          reply = d.output || d.text || d.message || d.answer || JSON.stringify(d);
-        } catch (_) {}
+        const reply = extractReply(raw);
         typing.textContent = reply;
       } catch (err) {
         typing.textContent = "Sorry, I couldn't reach the HR assistant. Please try again. (" + err.message + ")";
